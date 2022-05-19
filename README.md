@@ -1,3 +1,5 @@
+这个项目为慕课网仿jira项目，技术栈react hook + typescript
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
