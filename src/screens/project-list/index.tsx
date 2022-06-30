@@ -1,30 +1,40 @@
-import { useState } from "react";
 import { List } from "./list";
 import { SearchPanel } from "./search-panel";
 import { useDebounce, useDocumnetTitle } from "utils";
 import styled from "@emotion/styled";
-import { Typography } from "antd";
+import { Button, Typography, Row } from "antd";
 import {useProjects} from 'utils/project'
 import { useUsers } from "utils/user";
+import { useProjectsSearchParams } from "./util";
+import { useDispatch } from "react-redux"
+import { projectListActions } from "screens/project-list/project-list-slice";
+
+
 
 export const ProjectListScreen = () => {
-  const [param, setParam] = useState({
-    name: "",
-    personId: "",
-  });
-  const debouncedParam = useDebounce(param, 200);
-  const { isLoading, error, data: list } = useProjects(debouncedParam)
+  useDocumnetTitle("项目列表", false)
+  const [param, setParam] = useProjectsSearchParams()
+  const { isLoading, error, data: list, retry } = useProjects(useDebounce(param, 200))
   const { data: users } = useUsers()
-  useDocumnetTitle('项目列表', false)
-  
+  const dispatch = useDispatch()
+
   return (
     <Container>
-      <h2>项目列表</h2>
+      <Row justify={"space-between"}>
+        <h2>项目列表</h2>
+        <Button
+          style={{ padding: 0 }}
+          onClick={() => dispatch(projectListActions.openProjectModal())}
+          type={"link"}>创建项目</Button>
+      </Row>
       <SearchPanel users={users || []} param={param} setParam={setParam} />
       {
         error ? <Typography.Text type={'danger'}>{error.message}</Typography.Text> : null
       }
-      <List loading={isLoading} dataSource={list|| []} users={users || []} />
+      <List
+        refresh={retry} loading={isLoading}
+        dataSource={list || []}
+        users={users || []} />
     </Container>
   );
 };

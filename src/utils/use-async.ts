@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMountedRef } from "utils";
 
 interface State<D>{
   error: Error | null;
@@ -16,11 +17,17 @@ const defaultConfig = {
   throwOnError: false
 }
 export const useAsync = <D>(initialState?: State<D>, initialConfig?: typeof defaultConfig) => {
-  const config = { ...defaultConfig, initialConfig}
+  const config = { ...defaultConfig, ...initialConfig}
   const [state, setState] = useState<State<D>>({
     ...defaultInitialState,
     ...initialState
   })
+
+  const mountedRef = useMountedRef()
+
+  const [retry, setRetry] = useState(() => () => { })
+  
+
   const setData = (data: D) => setState({
     data,
     stat: 'success',
@@ -33,13 +40,20 @@ export const useAsync = <D>(initialState?: State<D>, initialConfig?: typeof defa
     data: null
   })
    // run用来触发异步请求
-  const run = (promise: Promise<D>) => {
+  const run = (promise: Promise<D>, runConfig?: { retry: () => Promise<D> }) => {
     if (!promise || !promise.then) {
       throw new Error('请传入 Promise 类型数据')
     }
+    setRetry(() => () => {
+      if (runConfig?.retry) {
+        run(runConfig?.retry(), runConfig)
+      }
+    })
     setState({ ...state, stat: "loading" })
     return promise.then(data => {
-      setData(data)
+      if (mountedRef.current) {
+        setData(data)
+      }
       return data
     }).catch(error => {
       // catch 会消化异常，如果不主动抛出，外面是不会接收到异常的
@@ -49,6 +63,8 @@ export const useAsync = <D>(initialState?: State<D>, initialConfig?: typeof defa
     })
   }
 
+ 
+
   return {
     isIdle: state.stat === 'idle',
     isLoading: state.stat === 'loading',
@@ -57,6 +73,8 @@ export const useAsync = <D>(initialState?: State<D>, initialConfig?: typeof defa
     run,
     setData,
     setError,
-    ...state
+    // retry 被调用时重新跑一遍 run 让 state 刷新一遍
+    retry,
+    ...state,
   }
 }

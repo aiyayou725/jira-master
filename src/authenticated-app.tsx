@@ -2,37 +2,43 @@ import { useAuth } from "context/auth-context";
 import { ProjectListScreen } from "screens/project-list";
 import styled from "@emotion/styled"
 import { Row } from "assets/components/lib";
-import SoftWareLogo from 'assets/software-logo.svg'
+import {ReactComponent as SoftWareLogo} from 'assets/software-logo.svg'
 import { Dropdown, Menu, Button } from "antd";
-import { Route, Routes } from 'react-router'
+import { Route, Routes, Navigate } from 'react-router'
 import { ProjectScreen } from 'screens/project'
 import { BrowserRouter as Router } from "react-router-dom";
+import { resetRoute } from "./utils/index"
+import { ProjectModal } from "./screens/project-list/project-modal"
+import { ProjectPopover } from "./assets/components/project-popover"
 
 
 export const AuthenticatedApp = () => {
+  
   return (<Container>
     <PageHeader />
     <Main>
       <Router>
       <Routes>
-        <Route path={'/projects'} element={<ProjectListScreen />} />
-        <Route path={'/projects/:projectId/*'} element={<ProjectScreen />} />
+        <Route path={'/projects'} element={<ProjectListScreen  />} />
+          <Route path={'/projects/:projectId/*'} element={<ProjectScreen />} />
+          <Route path="*" element={<Navigate to="/projects" replace={true}/>} />
       </Routes>
 
       </Router>
-      
-
     </Main>
+    <ProjectModal />
   </Container>)
 }
 
 const PageHeader = () => {
   const { logout, user } = useAuth()
   return <Header between={true}>
-  <HeaderLeft gap={true}>
-    <img src={SoftWareLogo} alt={""} />
-    <h3>项目</h3>
-    <h3>用户</h3>
+    <HeaderLeft gap={true}>
+    <Button style={{padding: 0}} type={'link'} onClick={resetRoute}>
+        <SoftWareLogo width={'18rem'} color={'rgb(38,132,255)'} />
+      </Button>
+      <ProjectPopover></ProjectPopover>
+    <span>用户</span>
   </HeaderLeft>
   <HeaderRight>
     <Dropdown overlay={<Menu>
